@@ -2,12 +2,15 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # 允许前端的请求
+CORS(app)
 
 # 模拟数据库（用字典存用户）
 users_db = {}
 
-# ===== 注册接口 =====
+@app.route("/")
+def home():
+    return "Python 后端运行正常！"
+
 @app.route("/api/register", methods=["POST"])
 def register():
     data = request.get_json()
@@ -20,11 +23,9 @@ def register():
     if email in users_db:
         return jsonify({"success": False, "message": "该邮箱已被注册"}), 400
 
-    # 保存用户（实际项目中密码需要加密）
     users_db[email] = {"password": password}
     return jsonify({"success": True, "message": "注册成功！", "user": email})
 
-# ===== 登录接口 =====
 @app.route("/api/login", methods=["POST"])
 def login():
     data = request.get_json()
@@ -45,7 +46,6 @@ def login():
         "token": "fake-jwt-token-12345"
     })
 
-# ===== 验证用户接口 =====
 @app.route("/api/me", methods=["GET"])
 def get_user():
     token = request.headers.get("Authorization")
@@ -53,11 +53,14 @@ def get_user():
     if not token:
         return jsonify({"success": False, "message": "未登录"}), 401
 
-    # 简单模拟：从 token 里提取邮箱（实际项目用 JWT 解析）
     if token == "Bearer fake-jwt-token-12345":
         return jsonify({"success": True, "user": "test@example.com"})
     
     return jsonify({"success": False, "message": "token 无效"}), 401
 
+# ===== Vercel 需要这个 =====
+vercel_app = app
+
+# ===== 本地运行用 =====
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
